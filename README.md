@@ -7,6 +7,8 @@ Put data in 'data' folder.
 Download data from [UK-DALE](http://jack-kelly.com/data/)
 
 # Dependencies
+|Libraries  | Version|
+|-----------|:------:|
 |Python     | 3.6    |
 |Tensorflow | 1.2.0  |
 |numpy      | 1.13.1 |

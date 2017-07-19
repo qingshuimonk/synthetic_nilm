@@ -99,9 +99,3 @@ ENV/
 
 # mypy
 .mypy_cache/
-
-# data file
-data/
-
-# temporory task file
-]task/

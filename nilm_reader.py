@@ -19,7 +19,7 @@ class nilm_reader(object):
         self.data_dir = data_dir
         self.meters = {}
     
-    def read_chan_list(self, app_name, ds_name='UKDALE'):
+    def load_chan_list(self, app_name, ds_name='UKDALE'):
         """
         Returns corresponding meter numbers given appliance name
         For different channels with same name, it will return a list
@@ -33,7 +33,7 @@ class nilm_reader(object):
         return(chan_list)
         
     
-    def read_meter(self, app_name, ds_name='UKDALE'):
+    def load_meter(self, app_name, ds_name='UKDALE'):
         """
         Take an appliance name, return a list of meters object
         Each meter object is a dictionary with three attributes, appliance name,
@@ -41,7 +41,7 @@ class nilm_reader(object):
         """
         meter = {}
         if(ds_name=='UKDALE'):
-            chan_list = self.read_chan_list(app_name, ds_name)
+            chan_list = self.load_chan_list(app_name, ds_name)
             for chan_num in chan_list:
                 file_name = 'channel_%d.dat' % chan_num
                 df = pd.read_csv(os.path.join(self.data_dir, file_name), sep=' ')
@@ -130,7 +130,8 @@ class nilm_reader(object):
         x_tics = [datetime.fromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S') 
             for x in meter2plt.index]
         ax.plot_date(pd.DatetimeIndex(x_tics).to_pydatetime(), 
-                     meter2plt, '-', label='%s %s'%(app_name, meter_num))
+                     meter2plt, '-', label='%s %s'%(app_name, meter_num), 
+                     alpha=0.5)
         plt.xticks(rotation=45)
         ax.xaxis.set_major_formatter(dates.DateFormatter('%Y-%m-%d'))
         
@@ -156,3 +157,26 @@ class nilm_reader(object):
                 for m_num in self.meters[a_name]:
                     self.plot_single_meter(ax, a_name, m_num, lb, ub)
         plt.tight_layout()
+        
+        
+    def read_single_meter(self, app_name, meter_num, window, overlap):
+        """
+        Read single meter's data with a sliding window, return a generator
+        """
+        step = window - overlap
+        for start in range(0, len(self.meters[app_name][meter_num].values) 
+            - window + 1, step):
+            chunk = self.meters[app_name][meter_num].values[start: start + window]
+            yield chunk
+            
+    def read_batch(self, chunk, batch_size):
+        """
+        Push single meter generator in a batch, also return a generator
+        """
+        batch = []
+        for element in chunk:
+            batch.append(element)
+            if len(batch) == batch_size:
+                yield batch
+                batch = []
+        yield batch
